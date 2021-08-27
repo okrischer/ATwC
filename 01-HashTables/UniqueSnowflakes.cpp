@@ -1,7 +1,24 @@
 #include <iostream>
 #include <vector>
+#include <unordered_map>
+#include <algorithm>
 
 using namespace std;
+
+unordered_multimap<int, vector<int>> snowflakes;
+vector<vector<int>> matches;
+
+void set_matches(pair<const int, vector<int>> match) {
+  matches.push_back(get<1>(match));
+}
+
+int get_hash(const vector<int>& sf, const int n) {
+  int sum = 0;
+  for (int i : sf) {
+    sum += i;
+  }
+  return sum % n;
+}
 
 int ident_right(const vector<int>& snow1, const vector<int>& snow2, int start) {
   for (int i=0; i!=6; i++) {
@@ -24,24 +41,22 @@ int ident_left(const vector<int>& snow1, const vector<int>& snow2, int start) {
   return 1;
 }
 
-int are_ident(const vector<int>& snow1, const vector<int>& snow2) {
+int are_ident(const vector<int>& sf1, const vector<int>& sf2) {
   for (int i=0; i!=6; i++) {
-    if (ident_right(snow1, snow2, i)) {
+    if (ident_right(sf1, sf2, i)) {
       return 1;
     }
-    if (ident_left(snow1, snow2, i)) {
+    if (ident_left(sf1, sf2, i)) {
       return 1;
     }
   }
   return 0;
 }
 
-int find_ident(const vector<vector<int>>& snowflakes) {
-  for (size_t i=0; i!=snowflakes.size(); i++) {
-    for (size_t j=i+1; j!=snowflakes.size(); j++) {
-      if (are_ident(snowflakes[i], snowflakes[j])) {
-        return 1;
-      }
+int find_ident(const vector<int>& sf, const vector<vector<int>>& matches) {
+  for (size_t i=0; i!=matches.size(); i++) {
+    if (are_ident(sf, matches[i])) {
+      return 1;
     }
   }
   return 0;
@@ -52,19 +67,28 @@ int main() {
   cin.tie(0);
   int n;
   cin >> n;
-  vector<vector<int>> snowflakes(n);
   vector<int> sf(6);
+  int hashcode;
 
   for (int i=0; i<n; i++) {
     for (int j=0; j<6; j++) {
       cin >> sf[j];
     }
-    snowflakes[i] = sf;
+    hashcode = get_hash(sf, n);
+    if (snowflakes.count(hashcode) != 0) {
+      matches.clear();
+      auto range = snowflakes.equal_range(hashcode);
+      for_each (range.first, range.second, set_matches);
+      if (find_ident(sf, matches)) {
+        cout << "Twin snowflakes found.\n";
+        return 0;
+      } else {
+        snowflakes.emplace(hashcode, sf);
+      }
+    } else {
+      snowflakes.emplace(hashcode, sf);
+    }
   }
-  if (find_ident(snowflakes)) {
-    cout << "Twin snowflakes found.";
-  } else {
-    cout << "No two snowflakes are alike.";
-  }
-  cout << endl;
+
+  cout << "No two snowflakes are alike.\n";
 }
