@@ -1,35 +1,29 @@
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
 import Data.Char (isDigit)
-import Data.List (unfoldr)
+import Data.List (unfoldr, elemIndex)
 import Data.Maybe (isNothing, fromMaybe)
 
 main :: IO ()
 main = do
-  _ <- getLine
-  sf <- getSnowflakes
+  [n] <- unfoldr readInt <$> B.getLine
+  let readInput = [x | x <- [B.getLine], _ <- [1..n]]
+  sf <- sequence readInput 
   let snowflakes = convert sf
   if foundIdentical snowflakes
      then putStrLn "Twin snowflakes found."
      else putStrLn "No two snowflakes are alike."
   
-getSnowflakes :: IO [B.ByteString]
-getSnowflakes = B.getLine >>= f
-  where f x = if B.null x then return []
-                          else getSnowflakes >>= g
-                             where g xs = return (x:xs)
-
-foundIdentical :: [[Integer]] -> Bool
+foundIdentical :: [[Int]] -> Bool
 foundIdentical sf = searchMap sf M.empty
 
-convert :: [B.ByteString] -> [[Integer]]
-convert = map (unfoldr readInteger)
+convert :: [B.ByteString] -> [[Int]]
+convert = map (unfoldr readInt)
 
-readInteger :: B.ByteString -> Maybe (Integer, B.ByteString)
-readInteger = B.readInteger . B.dropWhile (not . isDigit)
+readInt :: B.ByteString -> Maybe (Int, B.ByteString)
+readInt = B.readInt . B.dropWhile (not . isDigit)
 
-searchMap :: [[Integer]] ->  M.Map Integer [Integer] -> Bool
+searchMap :: [[Int]] ->  M.Map Int [Int] -> Bool
 searchMap [] _ = False
 searchMap (xs:xss) acc
   | isNothing result = searchMap xss (M.insert hash xs acc)
@@ -39,27 +33,29 @@ searchMap (xs:xss) acc
         result = M.lookup hash acc
         values = fromMaybe [] result
   
-contains :: [Integer] -> [Integer] -> Bool
+contains :: [Int] -> [Int] -> Bool
 contains values = checkIdent (split values)
 
-split :: [Integer] -> [[Integer]]
+split :: [Int] -> [[Int]]
 split [] = []
 split xs = fst pair : split (snd pair)
   where pair = splitAt 6 xs
 
-checkIdent :: [[Integer]] -> [Integer] -> Bool
+checkIdent :: [[Int]] -> [Int] -> Bool
 checkIdent [] _ = False
-checkIdent (xs:xss) sf = identPair xs sf || checkIdent xss sf
+checkIdent (xs:xss) sf = areEqual xs sf || checkIdent xss sf
 
-identPair :: [Integer] -> [Integer] -> Bool
-identPair xs ys = S.fromList xs == S.fromList ys && areEqual xs ys
+areEqual :: [Int] -> [Int] -> Bool 
+areEqual [] _ = False
+areEqual _ [] = False
+areEqual s1@(x:xs) s2@(y:ys)
+  | x `notElem` s2 = False
+  | otherwise =
+    let i = fromMaybe 0 (elemIndex x s2)
+        shiftR = [(n, (n+i) `mod` 6) | n <- [0..5]]
+        shiftL' = [(n, i-n) | n <- [0..5]]
+        shiftL = map (\ (i,j) -> if j < 0 then (i, j+6) else (i,j)) shiftL'
+    in checkPair s1 s2 shiftR || checkPair s1 s2 shiftL
 
-areEqual :: [Integer] -> [Integer] -> Bool 
-areEqual xs ys
-  | x /= y =
-    let shiftL = dropWhile (/= x) ys ++ takeWhile (/= x) ys
-        shiftR = reverse (tail (dropWhile (/= x) ys) ++ takeWhile (/= x) ys ++ [x])
-    in xs == shiftL || xs == shiftR
-  | otherwise = xs == ys
-  where x = head xs
-        y = head ys
+checkPair :: [Int] -> [Int] -> [(Int, Int)] -> Bool
+checkPair s1 s2 = all ((== True) . (\ (i, j) -> s1 !! i == s2 !! j)) 
