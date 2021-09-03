@@ -1,5 +1,6 @@
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Map.Strict as M
+import qualified Control.Monad as C
 import Data.Char (isDigit)
 import Data.List (unfoldr, elemIndex)
 import Data.Maybe (isNothing, fromMaybe)
@@ -7,34 +8,31 @@ import Data.Maybe (isNothing, fromMaybe)
 main :: IO ()
 main = do
   [n] <- unfoldr readInt <$> B.getLine
-  let readInput = [x | x <- [B.getLine], _ <- [1..n]]
-  sf <- sequence readInput 
-  let snowflakes = convert sf
-  if foundIdentical snowflakes
-     then putStrLn "Twin snowflakes found."
-     else putStrLn "No two snowflakes are alike."
-  
-foundIdentical :: [[Int]] -> Bool
-foundIdentical sf = searchMap sf M.empty
-
-convert :: [B.ByteString] -> [[Int]]
-convert = map (unfoldr readInt)
+  snowflakes <- C.forM [1..n] (const (unfoldr readInt <$> B.getLine))
+  if foundIdentical snowflakes M.empty
+    then putStrLn "Twin snowflakes found."
+    else putStrLn "No two snowflakes are alike."
 
 readInt :: B.ByteString -> Maybe (Int, B.ByteString)
 readInt = B.readInt . B.dropWhile (not . isDigit)
 
-searchMap :: [[Int]] ->  M.Map Int [Int] -> Bool
-searchMap [] _ = False
-searchMap (xs:xss) acc
-  | isNothing result = searchMap xss (M.insert hash xs acc)
-  | contains values xs = True
-  | otherwise = searchMap xss (M.insertWith (++) hash xs acc)
-  where hash = sum xs `mod` 100000
+foundIdentical :: [[Int]] -> M.Map Int [Int] -> Bool
+foundIdentical [] _ = False
+foundIdentical (xs:xss) sfMap =
+  found || foundIdentical xss updatedMap
+  where (found, updatedMap) = searchMap xs sfMap
+
+searchMap :: [Int] ->  M.Map Int [Int] -> (Bool, M.Map Int [Int])
+searchMap sf acc
+  | isNothing result = (False, M.insert hash sf acc)
+  | contains values sf = (True, acc)
+  | otherwise = (False, M.insertWith (++) hash sf acc)
+  where hash = sum sf `mod` 100000
         result = M.lookup hash acc
         values = fromMaybe [] result
   
 contains :: [Int] -> [Int] -> Bool
-contains values = checkIdent (split values)
+contains values = checkIdent (split values) 
 
 split :: [Int] -> [[Int]]
 split [] = []
