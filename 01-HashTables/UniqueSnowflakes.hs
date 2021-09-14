@@ -23,12 +23,12 @@ foundIdentical (xs:xss) sfMap =
   where (found, updatedMap) = searchMap xs sfMap
 
 searchMap :: [Int] ->  M.Map Int [Int] -> (Bool, M.Map Int [Int])
-searchMap sf acc
-  | isNothing result = (False, M.insert hash sf acc)
-  | contains values sf = (True, acc)
-  | otherwise = (False, M.insertWith (++) hash sf acc)
-  where hash = sum sf `mod` 100000
-        result = M.lookup hash acc
+searchMap sf sfMap
+  | isNothing result = (False, M.insert hash sf sfMap)
+  | contains values sf = (True, sfMap)
+  | otherwise = (False, M.insertWith (++) hash sf sfMap)
+  where hash = sum sf `rem` 100000
+        result = M.lookup hash sfMap
         values = fromMaybe [] result
   
 contains :: [Int] -> [Int] -> Bool
