@@ -1,7 +1,7 @@
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Map.Strict as M
 import Data.Char (isDigit)
-import Data.List (unfoldr, elemIndex)
+import Data.List (unfoldr, elemIndices)
 import Data.Maybe (isNothing, fromMaybe)
 
 main :: IO ()
@@ -42,17 +42,19 @@ checkIdent :: [[Int]] -> [Int] -> Bool
 checkIdent [] _ = False
 checkIdent (xs:xss) sf = areEqual xs sf || checkIdent xss sf
 
-areEqual :: [Int] -> [Int] -> Bool 
+areEqual :: [Int] -> [Int] -> Bool
 areEqual [] _ = False
-areEqual _ [] = False
-areEqual s1@(x:xs) s2@(y:ys)
+areEqual s1@(x:xs) s2
   | x `notElem` s2 = False
-  | otherwise =
-    let i = fromMaybe 0 (elemIndex x s2)
-        shiftR = [(n, (n+i) `mod` 6) | n <- [0..5]]
-        shiftL' = [(n, i-n) | n <- [0..5]]
-        shiftL = map (\ (i,j) -> if j < 0 then (i, j+6) else (i,j)) shiftL'
-    in checkPair s1 s2 shiftR || checkPair s1 s2 shiftL
+  | otherwise = checkPair s1 s2 (elemIndices x s2)
 
-checkPair :: [Int] -> [Int] -> [(Int, Int)] -> Bool
-checkPair s1 s2 = all ((== True) . (\ (i, j) -> s1 !! i == s2 !! j)) 
+checkPair :: [Int] -> [Int] -> [Int] -> Bool
+checkPair _ _ [] = False
+checkPair s1 s2 (x:xs) = 
+  all (\ (i, j) -> s1 !! i == s2 !! j) shiftR ||
+  all (\ (i, j) -> s1 !! i == s2 !! j) shiftL ||
+  checkPair s1 s2 xs
+  where
+    shiftR = [(n, (n+x) `mod` 6) | n <- [0..5]]
+    shiftL' = [(n, x-n) | n <- [0..5]]
+    shiftL = map (\ (i,j) -> if j < 0 then (i, j+6) else (i,j)) shiftL'
