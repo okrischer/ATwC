@@ -1,1 +1,0 @@
-ghc -O -o $1.exe $1.hs
