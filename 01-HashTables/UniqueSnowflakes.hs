@@ -50,11 +50,10 @@ areEqual s1@(x:xs) s2
 
 checkPair :: [Int] -> [Int] -> [Int] -> Bool
 checkPair _ _ [] = False
-checkPair s1 s2 (x:xs) = 
+checkPair s1 s2 (j:js) = 
   all (\(i, j) -> s1 !! i == s2 !! j) shiftR ||
   all (\(i, j) -> s1 !! i == s2 !! j) shiftL ||
-  checkPair s1 s2 xs
+  checkPair s1 s2 js
   where
-    shiftR = [(n, (n+x) `mod` 6) | n <- [0..5]]
-    shiftL' = [(n, x-n) | n <- [0..5]]
-    shiftL = map (\(i,j) -> if j < 0 then (i, j+6) else (i,j)) shiftL'
+    shiftR = [(i, (i+j)   `mod` 6) | i <- [0..5]]
+    shiftL = [(i, (j-i+6) `mod` 6) | i <- [5,4..0]]

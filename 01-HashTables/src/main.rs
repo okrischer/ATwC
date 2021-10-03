@@ -4,15 +4,15 @@ use std::hash::{Hash, Hasher};
 #[macro_use]
 extern crate dmoj;
 
-#[derive(Debug)]
 pub struct Snowflake([u32; 6]);
 
 impl PartialEq for Snowflake {
     fn eq(&self, other: &Self) -> bool {
         for i in 0..6 {
             if (0..6).all(|j| self.0[j] == other.0[(i + j) % 6]) ||
-               ((0..6).rev().all(|j| self.0[j] == other.0[(i + (5 - j)) % 6]))
-               {return true}
+               (0..6).rev().all(|j| self.0[j] == other.0[(i + (5 - j)) % 6]) {
+                return true
+            }
         }
         false
     }
@@ -34,15 +34,13 @@ fn snowflake() -> Snowflake {
 
 fn main() {
     let mut table: HashSet<Snowflake> = HashSet::new();
-    let mut found = false;
     let n = scan!(u32);
     for _ in 0..n {
         let sf = snowflake();
         if !table.insert(sf) {
             println!("Twin snowflakes found.");
-            found = true;
-            break
+            return
         }
     }
-    if !found {println!("No two snowflakes are alike.")}
+    println!("No two snowflakes are alike.")
 }
