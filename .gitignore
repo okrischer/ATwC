@@ -1,7 +1,10 @@
 .vscode/
 target/
+obj/
+bin/
 *.lock
 *.toml
+*.fsproj
 *.txt
 *.exe
 *.swp

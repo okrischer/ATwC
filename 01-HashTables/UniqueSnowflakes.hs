@@ -1,13 +1,12 @@
 import qualified Data.ByteString.Char8 as B
-import qualified Data.Map.Strict as M
+import qualified Data.IntMap.Strict as M
 import Data.Char (isDigit)
 import Data.List (unfoldr, elemIndices)
 import Data.Maybe (isNothing, fromMaybe)
 
 main :: IO ()
 main = do
-  input <- B.getContents
-  let n:snowflakes = B.lines input
+  n:snowflakes <- unfoldr readInt <$> B.getContents
   if foundIdentical snowflakes M.empty
     then putStrLn "Twin snowflakes found."
     else putStrLn "No two snowflakes are alike."
@@ -15,13 +14,13 @@ main = do
 readInt :: B.ByteString -> Maybe (Int, B.ByteString)
 readInt = B.readInt . B.dropWhile (not . isDigit)
 
-foundIdentical :: [B.ByteString] -> M.Map Int [Int] -> Bool
+foundIdentical :: [Int] -> M.IntMap [Int] -> Bool
 foundIdentical [] _ = False
-foundIdentical (xs:xss) sfMap =
-  found || foundIdentical xss updatedMap
-  where (found, updatedMap) = searchMap (unfoldr readInt xs) sfMap
+foundIdentical sfs sfMap =
+  found || foundIdentical (drop 6 sfs) updatedMap
+  where (found, updatedMap) = searchMap (take 6 sfs) sfMap
 
-searchMap :: [Int] ->  M.Map Int [Int] -> (Bool, M.Map Int [Int])
+searchMap :: [Int] -> M.IntMap [Int] -> (Bool, M.IntMap [Int])
 searchMap sf sfMap
   | isNothing result = (False, M.insert hash sf sfMap)
   | contains values sf = (True, sfMap)
