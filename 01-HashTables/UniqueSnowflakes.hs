@@ -23,23 +23,15 @@ foundIdentical sfs sfMap =
 searchMap :: [Int] -> M.IntMap [Int] -> (Bool, M.IntMap [Int])
 searchMap sf sfMap
   | isNothing result = (False, M.insert hash sf sfMap)
-  | contains values sf = (True, sfMap)
+  | checkIdent values sf = (True, sfMap)
   | otherwise = (False, M.insertWith (++) hash sf sfMap)
   where hash = sum sf `rem` 100000
         result = M.lookup hash sfMap
         values = fromMaybe [] result
   
-contains :: [Int] -> [Int] -> Bool
-contains values = checkIdent (split values) 
-
-split :: [Int] -> [[Int]]
-split [] = []
-split xs = fst pair : split (snd pair)
-  where pair = splitAt 6 xs
-
-checkIdent :: [[Int]] -> [Int] -> Bool
+checkIdent :: [Int] -> [Int] -> Bool
 checkIdent [] _ = False
-checkIdent (xs:xss) sf = areEqual xs sf || checkIdent xss sf
+checkIdent values sf = areEqual (take 6 values) sf || checkIdent (drop 6 values) sf
 
 areEqual :: [Int] -> [Int] -> Bool
 areEqual [] _ = False
