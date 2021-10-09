@@ -2,6 +2,7 @@
 target/
 obj/
 bin/
+dist-newstyle/
 *.lock
 *.toml
 *.fsproj
@@ -10,3 +11,4 @@ bin/
 *.swp
 *.hi
 *.o
+CHANGELOG.md
